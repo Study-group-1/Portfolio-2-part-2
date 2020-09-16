@@ -110,7 +110,7 @@ m6 <- update(m6, .~. + I(VISIT^2))
 
 pre <- predict(m6 , newdata = df, allow.new.levels = T)
 
-rmse(na.omit(df$CHI_MLU), predicted)
+rmse(na.omit(df$CHI_MLU), pre)
 #- create the test dataset (apply the code from assignment 1 or my function to clean up the 3 test datasets)
 # Test data
 LU <- read_csv('LU_test.csv')
