@@ -125,7 +125,7 @@ colnames(clean)[2] <- 'VISIT'
 #- test the performance of the models on the test data (Tips: google the functions "predict()")
 pre2 <- predict(m6, newdata = clean, )
 
-rmse(na.omit(clean$CHI_MLU), pre)
+rmse(na.omit(clean$CHI_MLU), pre2)
 #- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 
 ```
