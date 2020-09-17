@@ -101,16 +101,17 @@ CleanUpData <- function(Demo,LU,Word){
 # Load training Data
 df <- read_csv('autisme')
 df$X1 <- NULL
-
+df <- df %>% filter(!is.na(CHI_MLU))
 #- recreate the models you chose last time (just write the code again and apply it to Train Data)
 m6 <- lmerTest::lmer(CHI_MLU ~ VISIT * Diagnosis + (1 | SUBJ), df, REML = F)
 m6 <- update(m6, .~. + I(VISIT^2))
 
 #- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the function rmse())
 
+
 pre <- predict(m6 , newdata = df, allow.new.levels = T)
 
-rmse(na.omit(df$CHI_MLU), pre)
+rmse(df$CHI_MLU, pre)
 #- create the test dataset (apply the code from assignment 1 or my function to clean up the 3 test datasets)
 # Test data
 LU <- read_csv('LU_test.csv')
@@ -122,10 +123,12 @@ clean <- CleanUpData(Demo, LU, Word)
 colnames(clean)[1] <- 'SUBJ'
 colnames(clean)[2] <- 'VISIT'
 
+clean <- clean %>% filter(!is.na(clean$CHI_MLU))
+
 #- test the performance of the models on the test data (Tips: google the functions "predict()")
 pre2 <- predict(m6, newdata = clean, )
 
-rmse(na.omit(clean$CHI_MLU), pre2)
+rmse(clean$CHI_MLU, pre2)
 #- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 prei <- predictInterval(m6, newdata = clean)
 
@@ -156,9 +159,28 @@ In this exercise you have to use cross-validation to calculate the predictive er
 m1 <- lmer(CHI_MLU ~ VISIT + Diagnosis + (1 + VISIT|SUBJ), df)
 
 #- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
+k <- 6
+folds <- createFolds(unique(df$SUBJ, k = k, list = T, returnTrain = F))
 
+trainrmse <- rep(NA, k)
+testrmse <- rep(NA, k)
 
-#- Report the results and comment on them. 
+i = 1
+
+for (fold in folds){
+  train = subset(df, !(SUBJ %in% fold))
+  test = subset(df, SUBJ %in% fold)
+  model = lmer(CHI_MLU ~ Diagnosis * VISIT + (1| SUBJ), train)
+  test$prediction = predict(model, test, allow.new.levels = T)
+  train$prediction = fitted(model)
+  trainrmse[i] = rmse (train$CHI_MLU, fitted(model))
+  testrmse[i] = rmse (test$CHI_MLU, test$prediction)
+  i = i + 1
+}
+trainrmse
+
+#- Report the results and comment on them.
+
 
 #- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
 
