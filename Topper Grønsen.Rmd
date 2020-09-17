@@ -47,7 +47,7 @@ How did your models from last time perform? In this exercise you have to compare
 
 ```{r, include = FALSE}
 
-pacman::p_load(readr,dplyr,stringr,lmerTest,Metrics,caret, tidyverse)
+pacman::p_load(readr,dplyr,stringr,lmerTest,Metrics,caret, tidyverse, merTools)
 
 ## Clean up function, included to inspire you
 
@@ -127,6 +127,9 @@ pre2 <- predict(m6, newdata = clean, )
 
 rmse(na.omit(clean$CHI_MLU), pre2)
 #- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
+prei <- predictInterval(m6, newdata = clean)
+
+summary(prei)
 
 ```
 
@@ -150,8 +153,10 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 ```{r}
 #- Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
+m1 <- lmer(CHI_MLU ~ VISIT + Diagnosis + (1 + VISIT|SUBJ), df)
 
 #- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
+
 
 #- Report the results and comment on them. 
 
