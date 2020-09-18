@@ -1,6 +1,6 @@
 ---
 title: "Assignment 2 - Language Development in ASD - Making predictions"
-author: "Riccardo Fusaroli"
+author: "Gustav, Magnus, Morten, Nicoline, Tobias"
 date: "August 9, 2019"
 output: html_document
 ---
@@ -56,7 +56,7 @@ CleanUpData <- function(Demo,LU,Word){
   Speech <- merge(LU, Word) %>% 
     rename(
       Child.ID = SUBJ, 
-      Visit=VISIT) %>%
+      Visit = VISIT) %>%
     mutate(
       Visit = as.numeric(str_extract(Visit, "\\d")),
       Child.ID = gsub("\\.","", Child.ID)
@@ -73,17 +73,17 @@ CleanUpData <- function(Demo,LU,Word){
       Child.ID = gsub("\\.","", Child.ID)
     )
     
-  Data=merge(Demo,Speech,all=T)
+  Data = merge(Demo, Speech, all = T)
   
-  Data1= Data %>% 
-     subset(Visit=="1") %>% 
+  Data1 = Data %>% 
+     subset(Visit == "1") %>% 
      dplyr::select(Child.ID, ADOS, ExpressiveLangRaw, MullenRaw, Socialization) %>%
      rename(Ados1 = ADOS, 
             verbalIQ1 = ExpressiveLangRaw, 
             nonVerbalIQ1 = MullenRaw,
             Socialization1 = Socialization) 
   
-  Data=merge(Data, Data1, all=T) %>%
+  Data = merge(Data, Data1, all = T) %>%
     mutate(
       Child.ID = as.numeric(as.factor(as.character(Child.ID))),
       Visit = as.numeric(as.character(Visit)),
@@ -156,31 +156,33 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 ```{r}
 #- Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
-m1 <- lmer(CHI_MLU ~ VISIT + Diagnosis + (1 + VISIT|SUBJ), df)
+m1 <- CHI_MLU ~ VISIT + Diagnosis + (1|SUBJ)
 
 #- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
-k <- 6
-folds <- createFolds(unique(df$SUBJ, k = k, list = T, returnTrain = F))
 
-trainrmse <- rep(NA, k)
-testrmse <- rep(NA, k)
-
-i = 1
-
-for (fold in folds){
-  train = subset(df, !(SUBJ %in% fold))
-  test = subset(df, SUBJ %in% fold)
-  model = lmer(CHI_MLU ~ Diagnosis * VISIT + (1| SUBJ), train)
-  test$prediction = predict(model, test, allow.new.levels = T)
-  train$prediction = fitted(model)
-  trainrmse[i] = rmse (train$CHI_MLU, fitted(model))
-  testrmse[i] = rmse (test$CHI_MLU, test$prediction)
-  i = i + 1
+cross_validate <- function(x) {
+  folds <- createFolds(unique(df$SUBJ), k = k, list = T, returnTrain = F)
+  k <- 6
+  trainrmse <- rep(NA, k)
+  testrmse <- rep(NA, k)
+  i = 1
+  for (fold in folds) {
+    train = subset(df, !(SUBJ %in% fold))
+    test = subset(df, SUBJ %in% fold)
+    model = lmer(x, train)
+    test$prediction = predict(model, test, allow.new.levels = T)
+    train$prediction = fitted(model)
+    trainrmse[i] = rmse(train$CHI_MLU, fitted(model))
+    testrmse[i] = rmse(test$CHI_MLU, test$prediction)
+    i = i + 1
+  }
+  rm <- list("train" = trainrmse, "test" = testrmse)
+  return(rm)
 }
-trainrmse
+
+cross_validate(m1)
 
 #- Report the results and comment on them.
-
 
 #- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
 
@@ -203,6 +205,12 @@ You want to evaluate:
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
 ```{r}
+
+foo <- 12
+bar <- c("a", "b", "e")
+newList <- list("integer" = foo, "names" = bar)
+
+newList
 
 ```
 
