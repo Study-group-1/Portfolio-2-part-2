@@ -156,13 +156,14 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 ```{r}
 #- Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
+
 m1 <- CHI_MLU ~ VISIT + Diagnosis + (1|SUBJ)
 
 #- Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
 
-cross_validate <- function(x) {
-  folds <- createFolds(unique(df$SUBJ), k = k, list = T, returnTrain = F)
+cross_validate <- function(x, y) {
   k <- 6
+  folds <- createFolds(unique(df$SUBJ), k = k, list = T, returnTrain = F)
   trainrmse <- rep(NA, k)
   testrmse <- rep(NA, k)
   i = 1
@@ -176,15 +177,39 @@ cross_validate <- function(x) {
     testrmse[i] = rmse(test$CHI_MLU, test$prediction)
     i = i + 1
   }
-  rm <- list("train" = trainrmse, "test" = testrmse)
+  rm <- data.frame("model" = y, "train" = trainrmse, "test" = testrmse, "diff" = testrmse - trainrmse, "meantrain" = rep(mean(trainrmse), 6), "meantest" = rep(mean(testrmse), 6), "meandiff" = rep(mean(testrmse) - mean(trainrmse), 6), "sdtrain" = rep(sd(trainrmse), 6), "sdtest" = rep(sd(testrmse), 6))
   return(rm)
 }
 
-cross_validate(m1)
+m1_rmse <- cross_validate(m1, "m1")
 
 #- Report the results and comment on them.
 
+
+
 #- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
+
+m2 <- CHI_MLU ~ VISIT * Diagnosis + (1|SUBJ)
+
+m2_rmse <- cross_validate(m2, "m2")
+
+m3 <- CHI_MLU ~ VISIT * Diagnosis + I(VISIT^2) + (1|SUBJ)
+
+m3_rmse <- cross_validate(m3, "m3")
+
+m4 <- CHI_MLU ~ VISIT + Diagnosis + types_CHI + MOT_MLU + (1|SUBJ)
+
+m4_rmse <- cross_validate(m4, "m4")
+
+m5 <- CHI_MLU ~ VISIT + Diagnosis * types_CHI + MOT_MLU + (1|SUBJ)
+
+m5_rmse <- cross_validate(m5, "m5")
+
+m6 <- CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1|SUBJ)
+
+m6_rmse <- cross_validate(m6, "m6")
+
+return(rmse_values <- rbind(m1_rmse, m2_rmse, m3_rmse, m4_rmse, m5_rmse, m6_rmse))
 
 # Bonus Question 1: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
 # Bonus Question 2: compare the cross-validated predictive error against the actual predictive error on the test data
@@ -206,11 +231,27 @@ You want to evaluate:
 
 ```{r}
 
-foo <- 12
-bar <- c("a", "b", "e")
-newList <- list("integer" = foo, "names" = bar)
+bernie <- subset(clean, SUBJ == "2")
 
-newList
+visit_average <- function(df, diagnosis, subject){
+  means_per_visit <-  rep(NA, 6)
+  visits = unique(df$VISIT)
+  i <-  1
+  for (i in visits) {
+    hej <- df %>% filter(VISIT == i & Diagnosis == diagnosis)
+    means_per_visit[i] <- mean(hej$CHI_MLU)
+    i <-  i + 1
+  }
+  td_means <- data.frame("visit" = unique(df$VISIT), "mean" = means_per_visit, "subject" = subject)
+  return(td_means)
+}
+
+df_tds <- visit_average(df, "TD", "TD")
+
+df_berns <- visit_average(bernie, "ASD", "Bern")
+hejsaaaa <- rbind(df_tds, df_berns)
+
+
 
 ```
 
