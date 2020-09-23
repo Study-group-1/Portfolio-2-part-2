@@ -215,7 +215,7 @@ TDvsBernie
 
 #make best model
 
-m7 <- lmer(CHI_MLU ~ VISIT + Diagnosis + types_CHI + MOT_MLU + (1|SUBJ), df, REML = FALSE)
+m7 <- lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1|SUBJ), df, REML = FALSE)
 
 #predict Bernie's data based on model
 
