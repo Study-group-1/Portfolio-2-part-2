@@ -179,7 +179,7 @@ m6 <- CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1|SUBJ)
 
 m6_rmse <- cross_validate(m6, 6, "m6")
 
-#make data frame containing rmse for test, train, difference between the two, mean rmse of test and train respectively, difference between means and standard deviation of train and test
+#make data frame containing rmse for test, train, difference between the two, mean rmse of test and train respectively, difference between means and standard deviation of train and test (Tobias)
 
 rmse_values <- rbind(m1_rmse, m2_rmse, m3_rmse, m4_rmse, m5_rmse, m6_rmse)
 ```
@@ -197,13 +197,11 @@ You want to evaluate:
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
 ```{r}
-#(Tobias)
-
-#make subset containing only Bernie's data
+#make subset containing only Bernie's data (Gustav)
 
 bernie <- subset(clean,  SUBJ == '2')
 
-#get means of child MLU of Bernie and TD children respectively
+#get means of child MLU of Bernie and TD children respectively (Magnus)
 
 TDvsBernie <- df %>% 
   filter(Diagnosis == "TD") %>% 
@@ -213,15 +211,15 @@ TDvsBernie <- df %>%
   mutate(bernie$CHI_MLU - mean)
 TDvsBernie
 
-#make best model
+#make best model (Morten)
 
 m7 <- lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1|SUBJ), df, REML = FALSE)
 
-#predict Bernie's data based on model
+#predict Bernie's data based on model (Nicoline)
 
 pre2 <- predict(m7, bernie)
 
-#compare prediction to actual values
+#compare prediction to actual values (Tobias)
 
 pre2
 
