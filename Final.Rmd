@@ -182,6 +182,7 @@ m6_rmse <- cross_validate(m6, 6, "m6")
 #make data frame containing rmse for test, train, difference between the two, mean rmse of test and train respectively, difference between means and standard deviation of train and test (Tobias)
 
 rmse_values <- rbind(m1_rmse, m2_rmse, m3_rmse, m4_rmse, m5_rmse, m6_rmse)
+print(rmse_values)
 ```
 
 ### Exercise 3) Assessing the single child
@@ -224,4 +225,7 @@ pre2 <- predict(m7, bernie)
 pre2
 
 bernie$CHI_MLU
+
+ASD_TD <- df %>% group_by(VISIT, Diagnosis) %>% summarise(mean(CHI_MLU))
+print(ASD_TD)
 ```
