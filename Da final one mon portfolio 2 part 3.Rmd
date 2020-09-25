@@ -1,0 +1,110 @@
+---
+title: "Assignment 1 - Language Development in ASD - Power and simulations"
+author: "[YOUR NAME]"
+date: "[DATE]"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Welcome to the third exciting part of the Language Development in ASD exercise
+
+In this part of the assignment, we try to figure out how a new study should be planned (i.e. how many participants?) in order to have enough power to replicate the findings (ensuring our sample size is adequate, our alpha at 0.05 and our beta at 0.8):
+1- if we trust the estimates of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for.
+2- if we are skeptical of the current study. Report the power analysis and comment on what you can (or cannot) use its estimates for.
+3- if we only have access to 30 participants. Identify the power for each relevant effect and discuss whether it's worth to run the study and why
+The list above is also what you should discuss in your code-less report.
+
+
+## Learning objectives
+
+- Learn how to calculate statistical power
+- Critically appraise how to apply frequentist statistical power
+
+### Exercise 1
+
+How much power does your study have (if your model estimates are quite right)?
+- Load your dataset (both training and testing), fit your favorite model, assess power for your effects of interest (probably your interactions).
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+- Test how many participants you would have to have to replicate the findings (assuming the findings are correct)
+
+N.B. Remember that main effects are tricky once you have interactions in the model (same for 2-way interactions w 3-way interactions in the model). If you want to test the power of main effects, run a model excluding the interactions.
+N.B. Check this paper: https://besjournals.onlinelibrary.wiley.com/doi/full/10.1111/2041-210X.12504
+You will be using:
+- powerSim() to calculate power
+- powerCurve() to estimate the needed number of participants
+- extend() to simulate more participants
+
+```{r}
+#load training and test dataset, combine into one
+pacman::p_load(tidyverse, simr)
+df <- read_csv('autisme')
+df$X1 <- NULL
+
+test <- read_csv('test_autisme')
+test$X1 <- NULL
+test$SUBJ <- test$SUBJ + 100
+
+da_one_mon <- rbind(df, test)
+da_one_mon <- da_one_mon[complete.cases(df[,c("CHI_MLU", "VISIT", "Diagnosis", "types_CHI", "MOT_MLU", "SUBJ")]),]
+
+write.csv(da_one_mon, "da_one_mon.csv")
+
+#create model
+m <- lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1|SUBJ), da_one_mon, REML = FALSE)
+
+#find effect size
+fixef(m)["VISIT:Diagnosis"]
+
+#do power simulation on the interaction between visit and diagnosis
+powerSim(m, simr::fixed("VISIT:Diagnosis"), nsim = 50)
+
+#create and plot powercurve of interaction
+pc1 <- powerCurve(m, simr::fixed("VISIT:Diagnosis"), along = "SUBJ", nsim = 50)
+plot(pc1)
+```
+
+
+### Exercise 2
+
+How would you perform a more conservative power analysis?
+- Identify and justify a minimum effect size for each of your relevant effects
+- take the model from exercise 1 and replace the effects with the minimum effect size that you'd accept.
+- assess the power curve by Child.ID, identifying an ideal number of participants to estimate each effect
+- if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+
+```{r}
+#find standard deviation of child MLU
+sd(da_one_mon$CHI_MLU)
+
+#set effect size to 0.1
+fixef(m) ['VISIT:DiagnosisTD'] <- 0.1
+#create and plot power curve for new effect size
+pc2 <- powerCurve(m, simr::fixed("VISIT:Diagnosis"), along = "SUBJ", nsim = 50)
+plot(pc2)
+
+
+
+# If we wanted the minimum effect size to be fx 0.06 we would have to extend the dataset, as follows.
+#fixef(m) ['VISIT:DiagnosisTD'] <- 0.06
+#pc3 <- powerCurve(m, simr::fixed("VISIT:Diagnosis"), along = "SUBJ", nsim = 50)
+#plot(pc3)
+
+#ex <- extend(m, along = 'SUBJ', n = 100)
+#pc4 <- powerCurve(ex, simr::fixed('VISIT:Diagnosis'), along = 'SUBJ', nsim = 50)
+#plot(pc4)
+```
+
+
+### Exercise 3
+
+Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why
+
+```{r}
+#running power simulation with an effect size of 0.1 and 30 participants
+ex2 <- extend(m, along = 'SUBJ', n = 30)
+powerSim(ex2, simr::fixed("VISIT:Diagnosis"), nsim = 50)
+```
